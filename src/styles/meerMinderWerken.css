@@ -288,3 +288,37 @@ html,body{margin:0}
 .mfoot{position:sticky;bottom:0;z-index:5;background:var(--surface);
   padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 .main{position:relative}
+.rwrap {
+  width: min(100% - 40px, 1180px) !important;
+  max-width: 1180px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.mcontent {
+  width: min(100% - 40px, 640px) !important;
+  max-width: 640px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.control,
+.field,
+input,
+select {
+  max-width: 520px;
+}
+
+@media (max-width: 700px) {
+  .rwrap,
+  .mcontent {
+    width: calc(100% - 24px) !important;
+  }
+
+  .control,
+  .field,
+  input,
+  select {
+    max-width: 100%;
+  }
+}
