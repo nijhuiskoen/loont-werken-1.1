@@ -1,0 +1,21 @@
+{
+  "name": "loont-werken",
+  "private": true,
+  "version": "21.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:calculations": "node scripts/test-calculations.mjs",
+    "check:sources": "node scripts/check-government-sources.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {}
+}
