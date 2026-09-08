@@ -586,4 +586,47 @@
   .holiday-hero{padding:24px 22px;flex-direction:column;align-items:flex-start;}
   .holiday-hero-net{text-align:left;}
 }
-.seo-sources{border-top:1px solid var(--line);padding-top:28px;margin-top:34px}.seo-sources h2{font-family:var(--font-display);font-size:21px;margin:0 0 14px}.seo-sources ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}.seo-sources li{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}.seo-sources a{display:inline-flex;align-items:center;gap:5px;width:max-content;color:var(--primary-ink);text-decoration:none}.seo-sources a:hover{text-decoration:underline}.seo-sources li span{font-size:12.5px;line-height:1.5;color:var(--ink-3)}.seo-disclaimer{font-size:12px!important;line-height:1.6!important;color:var(--ink-3)!important;margin-top:24px!important}
+
+/* ============================================================
+   MEER/MINDER WERKEN — dezelfde rustige calculator-layout als
+   de overige calculators. De oude split-screen wizard blijft
+   functioneel, maar gebruikt niet langer een aparte fullscreen
+   presentatie of introductiepagina.
+   ============================================================ */
+.meer-minder-flow{
+  width:100%;
+  max-width:var(--form-max);
+  margin-inline:auto;
+}
+.meer-minder-flow .main{
+  display:block;
+  background:transparent;
+  padding:0;
+  min-height:0;
+}
+.meer-minder-flow .mcontent{
+  max-width:none;
+  width:100%;
+  padding:0;
+  display:block;
+}
+.meer-minder-flow .q.pcard{
+  margin:0;
+  width:100%;
+}
+.meer-minder-flow .step-progress{
+  margin-bottom:24px;
+}
+.meer-minder-flow .mfoot{
+  position:static;
+  border-top:0;
+  background:transparent;
+  padding:18px 0 0;
+}
+.meer-minder-flow .wnote{
+  padding:16px 0 0;
+}
+@media(max-width:600px){
+  .meer-minder-flow{max-width:none;}
+  .meer-minder-flow .mfoot{padding-bottom:0;}
+}

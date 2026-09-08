@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, ChevronDown, ExternalLink } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import SEOHead from "../components/SEOHead.jsx";
@@ -22,7 +22,6 @@ export default function SeoLandingPage(){
     ...(calculator ? [{ name: calculator.title, path: calculator.slug }] : []),
     { name: page.h1, path: page.slug },
   ];
-  const related = (page.relatedPages || []).map(findSeoPage).filter(Boolean);
 
   return (
     <>
@@ -31,7 +30,6 @@ export default function SeoLandingPage(){
         description={page.metaDescription}
         path={page.slug}
         breadcrumbs={breadcrumbs}
-        faqs={page.faqs}
       />
       <Header />
       <main className="seo-page">
@@ -83,43 +81,15 @@ export default function SeoLandingPage(){
             </section>
           )}
 
-          {related.length > 0 && (
-            <section className="seo-related" aria-labelledby="seo-related-title">
-              <h2 id="seo-related-title">Meer over dit onderwerp</h2>
-              <div className="seo-related-grid">
-                {related.map((relatedPage) => (
-                  <Link to={relatedPage.slug} className="seo-related-card" key={relatedPage.slug}>
-                    <strong>{relatedPage.h1}</strong>
-                    <span>{relatedPage.intro}</span>
-                    <ArrowRight size={17} aria-hidden="true" />
-                  </Link>
-                ))}
-                {calculator && <Link to={calculator.slug} className="seo-related-card">
-                  <strong>{calculator.title}</strong>
-                  <span>{calculator.description}</span>
-                  <ArrowRight size={17} aria-hidden="true" />
-                </Link>}
-              </div>
-            </section>
-          )}
-
-          {page.sources?.length > 0 && (
-            <section className="seo-sources" aria-labelledby="seo-sources-title">
-              <h2 id="seo-sources-title">Bronnen</h2>
-              <ul>
-                {page.sources.map((source) => (
-                  <li key={source.url}>
-                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                      <strong>{source.label}</strong> <ExternalLink size={13} aria-hidden="true" />
-                    </a>
-                    <span>{source.note}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <p className="seo-disclaimer">Indicatieve informatie op basis van de {CIJFERS_JAAR}-gegevens die in Ouders Financieel worden gebruikt. De daadwerkelijke uitkomst kan afwijken van je persoonlijke situatie of loonstrook.</p>
+          <section className="seo-related" aria-labelledby="seo-related-title">
+            <h2 id="seo-related-title">Ook interessant</h2>
+            <div className="seo-related-grid">
+              {calculator && <Link to={calculator.slug} className="seo-related-card"><strong>{calculator.title}</strong><span>{calculator.description}</span><ArrowRight size={17} aria-hidden="true" /></Link>}
+              {page.slug !== "/netto-salaris-4000-bruto" && <Link to="/netto-salaris" className="seo-related-card"><strong>Netto salaris</strong><span>Bereken je bruto en netto salaris.</span><ArrowRight size={17} aria-hidden="true" /></Link>}
+              {page.slug !== "/van-40-naar-32-uur" && <Link to="/meer-minder-werken" className="seo-related-card"><strong>Meer of minder werken</strong><span>Bekijk wat minder of meer werken netto betekent.</span><ArrowRight size={17} aria-hidden="true" /></Link>}
+              {page.slug !== "/kosten-kinderopvang" && <Link to="/kinderopvang" className="seo-related-card"><strong>Kinderopvangkosten</strong><span>Bereken jullie netto kosten voor kinderopvang.</span><ArrowRight size={17} aria-hidden="true" /></Link>}
+            </div>
+          </section>
         </article>
       </main>
       <Footer />

@@ -75,7 +75,7 @@ function MeerMinderWerkenCalculator(){
   };
 
   const flow = useMemo(()=>{
-    const f=[{k:"intro"},{k:"household"}];
+    const f=[{k:"household"}];
     parents.forEach((_,i)=>f.push({k:"salary",i}));
     f.push({k:"cars"},{k:"childcount"});
     children.forEach((_,i)=>f.push({k:"child",i}));
@@ -85,7 +85,7 @@ function MeerMinderWerkenCalculator(){
 
   const idx=Math.min(step, flow.length-1);
   const cur=flow[idx];
-  const total=flow.length-2;                 // steps excluding intro + result
+  const total=flow.length-1;                 // invoerstappen, exclusief resultaat
   // Sluit het mobiele toetsenbord voordat we van stap wisselen.
   const dismissKeyboard = ()=>{
     try{
@@ -301,26 +301,9 @@ function MeerMinderWerkenCalculator(){
   };
   const aside = cur.k==="scenario" ? {t:cur.i===0?"Scenario 1":"Scenario 2", d:cur.i===0?"Hoe werken jullie nu?":"Waar wil je mee vergelijken?"} : (ASIDE[cur.k]||{t:"",d:""});
 
-  if(cur.k==="intro"){
-    return (
-      <div className="app" lang="nl">
-        <div className="introfull">
-          <div className="introcard">
-            <div className="badge" aria-hidden="true"><Users size={30}/></div>
-            <h1>Deeltijd of voltijd na een kind?</h1>
-            <p>Een paar korte vragen over je gezin, en je ziet meteen wat meer of minder werken netto oplevert — inclusief belasting, kinderopvangtoeslag en de auto van de zaak.</p>
-            <button className="btn btn-lg" onClick={next}>Beginnen <ArrowRight size={19} aria-hidden="true"/></button>
-            <p className="fine">Indicatief · cijfers {CIJFERS_JAAR} (bijgewerkt {CIJFERS_BIJGEWERKT}) · geen financieel advies · daadwerkelijke bedragen kunnen afwijken</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if(isResult){
     return (
-      <div className="app" lang="nl">
-        <div className="rwrap">
+      <div className="rwrap">
           <div className="rhead">
             <span className="kick">Overzicht</span>
             <h1>Jullie uitkomst</h1>
@@ -505,27 +488,19 @@ function MeerMinderWerkenCalculator(){
               : saveState_==="unavailable" ? <span>· Opslaan is hier niet beschikbaar; je gegevens gelden alleen deze sessie.</span> : null}
           </p>
           <p className="legal"><strong>Let op:</strong> dit is een indicatieve berekening op basis van de 2026-regels (schijven, heffingskortingen, IACK, kinderopvangtoeslag- en VNG-tabel, bijtelling, pensioen). Geen financieel advies. Je daadwerkelijke bedragen kunnen afwijken, afhankelijk van je precieze inkomen, je pensioenregeling en -uitvoerder, en het beleid van je gemeente (die van de VNG-adviestabel mag afwijken). Voor bindende bedragen: de proefberekening van de Belastingdienst, je pensioenuitvoerder/mijnpensioenoverzicht.nl en je gemeente. Arbeidskorting is voor lage inkomens vereenvoudigd; bijtelling telt mee in het toetsingsinkomen, niet in de cash-nettolonen.</p>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="app" lang="nl">
-      <div className="split">
-        <aside className="aside">
-          <div className="brandrow">Werk &amp; opvang · 2026</div>
-          <div className="stepno"><span className="big">{String(idx).padStart(2,"0")}</span><span className="tot">/ {String(total).padStart(2,"0")}</span></div>
-          <h2 className="asideT">{aside.t}</h2>
-          <p className="asideD">{aside.d}</p>
-          <div className="pdots" role="progressbar" aria-valuenow={idx} aria-valuemin={1} aria-valuemax={total} aria-valuetext={`Stap ${idx} van ${total}`}>
-            {Array.from({length:total}).map((_,n)=>(<i key={n} className={(n+1<idx?"on ":"")+(n+1===idx?"cur":"")} />))}
-          </div>
-        </aside>
-
-        <main className="main" onPointerDown={(e)=>{ const t=e.target; if(t && !/^(INPUT|TEXTAREA|SELECT|BUTTON|LABEL)$/.test(t.tagName) && !t.closest("label,button")) dismissKeyboard(); }}>
+    <div className="meer-minder-flow">
+      <main className="main" onPointerDown={(e)=>{ const t=e.target; if(t && !/^(INPUT|TEXTAREA|SELECT|BUTTON|LABEL)$/.test(t.tagName) && !t.closest("label,button")) dismissKeyboard(); }}>
           <div className="mcontent">
-            <div key={step} className="q step-anim" onKeyDown={(e)=>{
+            <div className="step-progress-label">Stap {idx + 1} van {total} · <strong>{aside.t}</strong></div>
+            <div className="step-progress" role="progressbar" aria-valuenow={idx + 1} aria-valuemin={1} aria-valuemax={total} aria-label="Voortgang">
+              {Array.from({length:total}).map((_,n)=>(<span key={n} className={`bar${n===idx?" is-active":n<idx?" is-done":""}`} />))}
+            </div>
+            <div key={step} className="q pcard step-anim" onKeyDown={(e)=>{
               if(e.key!=="Enter" || e.shiftKey) return;
               const t=e.target;
               if(t.tagName==="INPUT" && !["checkbox","radio"].includes(t.type)){
@@ -832,18 +807,18 @@ function MeerMinderWerkenCalculator(){
             <button className="btn-text" onClick={back} onPointerUp={(e)=>{ if(e.pointerType==="touch"){ e.preventDefault(); back(); } }}><ArrowLeft size={16} aria-hidden="true"/> Terug</button>
             <button className="btn btn-primary" onClick={tryNext} onPointerUp={(e)=>{ if(e.pointerType==="touch"){ e.preventDefault(); tryNext(); } }} aria-disabled={blocked} aria-describedby={showErrors&&blocked?errId:undefined} title={blocked?"Vul eerst de verplichte velden in":undefined}>{nextLabel} <ArrowRight size={18} aria-hidden="true"/></button>
           </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }
 
-
-/* De calculator houdt zijn eigen volledige layout (split-screen wizard);
-   CalculatorLayout levert alleen de terug-navigatie. */
 export default function MeerMinderWerken(){
   return (
-    <CalculatorLayout bare calculatorId="meer-minder-werken">
+    <CalculatorLayout
+      title="Deeltijd of voltijd na een kind?"
+      intro="Vergelijk wat meer of minder werken betekent voor jullie inkomen, kinderopvang en besteedbare bedrag."
+      calculatorId="meer-minder-werken"
+    >
       <MeerMinderWerkenCalculator />
     </CalculatorLayout>
   );
