@@ -24,6 +24,8 @@ export const CALCULATORS = [
     module: "MeerMinderWerken",
     order: 1,
     featured: true,
+    seoTitle: "Meer of minder werken berekenen",
+    seoDescription: "Bereken wat meer of minder werken betekent voor je bruto en netto inkomen.",
   },
   {
     id: "netto-salaris",
@@ -36,6 +38,8 @@ export const CALCULATORS = [
     module: "NettoSalaris",
     order: 5,
     featured: true,
+    seoTitle: "Netto salaris berekenen",
+    seoDescription: "Bereken wat je van je bruto salaris netto overhoudt, inclusief vakantiegeld, pensioen en 13e maand.",
   },
   {
     id: "vakantiegeld",
@@ -44,9 +48,12 @@ export const CALCULATORS = [
     slug: "/vakantiegeld",
     category: "werk",
     description: "Hoeveel krijg ik netto?",
-    available: false,
+    available: true,
     module: "Vakantiegeld",
-    order: 10,
+    order: 3,
+    featured: true,
+    seoTitle: "Vakantiegeld berekenen 2026 | Bruto en netto",
+    seoDescription: "Bereken hoeveel vakantiegeld je in 2026 bruto en netto krijgt. Vul je salaris en vakantiegeldpercentage in en ontdek wat je ongeveer overhoudt.",
   },
   {
     id: "ouderschapsverlof",
@@ -69,6 +76,8 @@ export const CALCULATORS = [
     available: true,
     module: "Kinderopvang",
     order: 2,
+    seoTitle: "Kinderopvangkosten berekenen",
+    seoDescription: "Bereken wat kinderopvang jullie netto kost na kinderopvangtoeslag.",
   },
   {
     id: "gezinsbudget",

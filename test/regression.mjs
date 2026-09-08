@@ -2,6 +2,7 @@
 import { calculateScenario } from "../src/calculations/income.js";
 import { calculatePension, calculateJaarruimte } from "../src/calculations/pension.js";
 import { calculateNetSalary } from "../src/calculations/netSalary.js";
+import { calculateHolidayPay } from "../src/calculations/holidayPay.js";
 import { calculateChildcare } from "../src/calculations/childcare.js";
 import { arb, ahk, iack, incomeTax } from "../src/calculations/tax.js";
 import { brutoBijtelling, nettoBijtelling } from "../src/calculations/car.js";
@@ -121,6 +122,15 @@ check("jaarruimte (60k inkomen, factor A 0)", JR.jaarruimte, 0.30*(60000-19172),
 const JR0 = calculateJaarruimte({inkomenVorigJaar:0, factorA:0});
 console.log(`  ✓ jaarruimte zonder inkomen: ${JR0} (verwacht null, geen verzonnen getal)`);
 if(JR0!==null) fails++;
+
+console.log("— vakantiegeld —");
+const V1 = calculateHolidayPay({ brutoBedrag: 4000, brutoPeriode: "maand", vakantiegeldPct: 0.08, loonheffingskorting: true });
+check("vakantiegeld bruto (4000/mnd, 8%)", V1.brutoVakantiegeld, 3840, 0.01);
+if(!(V1.nettoVakantiegeldIndicatief > 0 && V1.nettoVakantiegeldIndicatief < V1.brutoVakantiegeld)) fails++;
+const V2 = calculateHolidayPay({ brutoBedrag: 48000, brutoPeriode: "jaar", vakantiegeldPct: 0.08, loonheffingskorting: true });
+check("maand- vs jaarinvoer vakantiegeld", V2.brutoVakantiegeld, V1.brutoVakantiegeld, 0.01);
+const V3 = calculateHolidayPay({ vakantiegeldPct: 0.08, salarisWijziging: { enabled: true, maandenEerstePeriode: 6, salaris1: 3000, salaris2: 4000 } });
+check("salariswijziging vakantiegeld", V3.brutoVakantiegeld, 3360, 0.01);
 
 console.log("— netto salaris —");
 // laag salaris (arbeidskorting-opbouwtraject)

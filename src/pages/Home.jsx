@@ -2,6 +2,7 @@ import React from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import FeaturedCard from "../components/FeaturedCard.jsx";
+import SEOHead from "../components/SEOHead.jsx";
 import CalculatorCard from "../components/CalculatorCard.jsx";
 import { featuredCalculators, otherCalculators, CALCULATORS } from "../config/calculators.js";
 import { CIJFERS_JAAR } from "../data/2026/meta.js";
@@ -13,6 +14,12 @@ export default function Home(){
 
   return (
     <>
+      <SEOHead
+        title="Financiële calculators voor gezinnen"
+        description={`Bereken wat werken, kinderen en wonen betekenen voor jullie portemonnee. Met actuele Nederlandse cijfers van ${CIJFERS_JAAR}.`}
+        path="/"
+        breadcrumbs={[{name:"Ouders Financieel", path:"/"}]}
+      />
       <Header />
       <main className="home">
         <section className="hero-home">

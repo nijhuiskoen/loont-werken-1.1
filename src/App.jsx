@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { CALCULATORS } from "./config/calculators.js";
+import { SEO_PAGES } from "./config/seoPages.js";
 
 /*
  * App.jsx doet alleen de applicatiestructuur en routing.
@@ -9,6 +10,7 @@ import { CALCULATORS } from "./config/calculators.js";
  */
 
 const Home = lazy(()=>import("./pages/Home.jsx"));
+const SeoLandingPage = lazy(()=>import("./pages/SeoLandingPage.jsx"));
 
 /* Pages per module-naam uit de registry. Vite kan deze paden statisch analyseren. */
 const PAGES = {
@@ -41,6 +43,9 @@ export default function App(){
       <Suspense fallback={<Loading />}>
         <Routes>
           <Route path="/" element={<Home />} />
+          {SEO_PAGES.map((page)=>(
+            <Route key={page.slug} path={page.slug} element={<SeoLandingPage />} />
+          ))}
           {CALCULATORS.map((c)=>{
             const Page = PAGES[c.module];
             if(!Page) return null;

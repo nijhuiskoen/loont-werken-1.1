@@ -25,6 +25,11 @@ export const SOURCES = {
     note: "AOW-leeftijd en pensioenstelsel",
     url: "https://www.rijksoverheid.nl/onderwerpen/pensioen",
   },
+  rijksoverheidVakantiegeld: {
+    label: "Rijksoverheid — vakantiegeld",
+    note: "Hoogte en uitbetaling van vakantiegeld",
+    url: "https://www.rijksoverheid.nl/vraag-en-antwoord/vakantiedagen-en-vakantiegeld/hoe-hoog-is-mijn-vakantiegeld",
+  },
   svb: {
     label: "SVB",
     note: "AOW-bedragen",
@@ -56,6 +61,10 @@ export const SOURCES_BY_CALCULATOR = {
   "netto-salaris": [
     "belastingdienst",
     "rijksoverheid",
+  ],
+  "vakantiegeld": [
+    "rijksoverheidVakantiegeld",
+    "belastingdienst",
   ],
   "kinderopvang": [
     "toeslagen",

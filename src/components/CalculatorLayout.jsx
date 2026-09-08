@@ -4,6 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
 import { sourcesFor } from "../config/sources.js";
+import { CALCULATORS } from "../config/calculators.js";
+import SEOHead from "./SEOHead.jsx";
 
 /*
  * Gemeenschappelijke schil voor calculators.
@@ -13,9 +15,15 @@ import { sourcesFor } from "../config/sources.js";
  * bare=false -> standaard structuur: titel, uitleg, inhoud, bronnen.
  */
 export default function CalculatorLayout({ title, intro, calculatorId, bare=false, children }){
+  const calculator = calculatorId ? CALCULATORS.find((c) => c.id === calculatorId) : null;
+  const seoTitle = calculator?.seoTitle || title;
+  const seoDescription = calculator?.seoDescription || intro;
+  const seoPath = calculator?.slug || window.location.pathname;
+  const seo = <SEOHead title={seoTitle} description={seoDescription} path={seoPath} type="WebApplication" />;
   if(bare){
     return (
       <>
+        {seo}
         <nav className="calc-backbar">
           <Link to="/" className="backlink"><ArrowLeft size={16} aria-hidden="true"/> Alle calculators</Link>
         </nav>
@@ -26,6 +34,7 @@ export default function CalculatorLayout({ title, intro, calculatorId, bare=fals
   const sources = calculatorId ? sourcesFor(calculatorId) : [];
   return (
     <>
+      {seo}
       <Header compact />
       <main className="calc-shell">
         <Link to="/" className="backlink"><ArrowLeft size={16} aria-hidden="true"/> Alle calculators</Link>
