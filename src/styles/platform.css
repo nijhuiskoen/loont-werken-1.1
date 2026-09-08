@@ -529,7 +529,7 @@
 /* ============================================================
    VAKANTIEGELD — rustige stap-voor-stap calculator
    ============================================================ */
-.holiday-flow,.holiday-result{max-width:var(--form-max);margin-inline:auto;width:100%;}
+.holiday-flow,.holiday-result{width:100%;}
 .holiday-card{padding:30px;}
 .holiday-stack{gap:22px;margin-top:18px;}
 .holiday-option{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);padding:14px 16px;}
