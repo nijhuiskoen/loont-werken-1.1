@@ -1,72 +1,69 @@
-export const OFFICIAL_SOURCES = [
-  {
-    id: "bd-rekenvoorschriften",
-    authority: "Belastingdienst",
-    title: "Rekenvoorschriften voor de geautomatiseerde loonadministratie",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/brochures_en_publicaties/rekenvoorschriften-voor-de-geautomatiseerde-loonadministratie",
-    scope: "Loonheffingen, parameterwaarden en rekenregels",
+/*
+ * Bronnen die calculators kunnen tonen.
+ * Alleen de bronnen die in de bestaande calculator al gebruikt werden —
+ * hier is geen nieuwe fiscale informatie toegevoegd.
+ */
+
+export const SOURCES = {
+  belastingdienst: {
+    label: "Belastingdienst",
+    note: "Belastingschijven, heffingskortingen en arbeidskortingstabel",
+    url: "https://www.belastingdienst.nl",
   },
-  {
-    id: "bd-loonheffingen-nieuwsbrief",
-    authority: "Belastingdienst",
-    title: "Nieuwsbrief Loonheffingen",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/brochures_en_publicaties/nieuwsbrief-loonheffingen",
-    scope: "Nieuwe regels en tarieven per jaar",
+  belastingdienstCAP: {
+    label: "Belastingdienst — Centraal Aanspreekpunt Pensioenen",
+    note: "Fiscale pensioenkaders en AOW-franchise",
+    url: "https://www.belastingdienst.nl",
   },
-  {
-    id: "bd-box1-2026",
-    authority: "Belastingdienst",
-    title: "Box 1: uitleg en tarieven",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/boxen_en_tarieven/box_1/box_1",
-    scope: "Box 1 tarieven",
+  toeslagen: {
+    label: "Toeslagen (Belastingdienst)",
+    note: "Kinderopvangtoeslag: percentages en maximum uurtarieven",
+    url: "https://www.toeslagen.nl",
   },
-  {
-    id: "bd-ahk-2026",
-    authority: "Belastingdienst",
-    title: "Tabel algemene heffingskorting 2026",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/heffingskortingen/algemene_heffingskorting/tabel-algemene-heffingskorting-2026",
-    scope: "Algemene heffingskorting",
+  rijksoverheid: {
+    label: "Rijksoverheid",
+    note: "AOW-leeftijd en pensioenstelsel",
+    url: "https://www.rijksoverheid.nl/onderwerpen/pensioen",
   },
-  {
-    id: "bd-arbeidskorting-2026",
-    authority: "Belastingdienst",
-    title: "Tabel arbeidskorting 2026",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/heffingskortingen/arbeidskorting/tabel-arbeidskorting-2026",
-    scope: "Arbeidskorting",
-  },
-  {
-    id: "bd-iack-2026",
-    authority: "Belastingdienst",
-    title: "Tabel inkomensafhankelijke combinatiekorting 2026",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/prive/inkomstenbelasting/heffingskortingen_boxen_tarieven/heffingskortingen/inkomensafhankelijke_combikorting/inkomensafhankelijke-combinatiekorting-2026",
-    scope: "IACK",
-  },
-  {
-    id: "toeslagen-2026",
-    authority: "Dienst Toeslagen",
-    title: "Wat verandert er in 2026 voor uw toeslagen?",
-    url: "https://www.belastingdienst.nl/wps/wcm/connect/nl/toeslagen-2026/topics/veranderingen-toeslagen-2026",
-    scope: "Kinderopvangtoeslag en overige toeslagen",
-  },
-  {
-    id: "rijksoverheid-kinderopvang",
-    authority: "Rijksoverheid",
-    title: "Kosten kinderopvang in Nederland",
-    url: "https://www.rijksoverheid.nl/themas/belastingen-uitkeringen-en-toeslagen/kinderopvangtoeslag/kosten-kinderopvang-in-nederland",
-    scope: "Maximum uurprijzen en systematiek kinderopvang",
-  },
-  {
-    id: "svb-aow",
-    authority: "SVB",
-    title: "Bedragen AOW",
+  svb: {
+    label: "SVB",
+    note: "AOW-bedragen",
     url: "https://www.svb.nl/nl/aow/bedragen-aow/aow-bedragen",
-    scope: "AOW bedragen; halfjaarlijkse updates",
   },
-  {
-    id: "svb-kinderbijslag",
-    authority: "SVB",
-    title: "Bedragen en betaaldagen kinderbijslag",
-    url: "https://www.svb.nl/nl/kinderbijslag/bedragen-betaaldagen/bedragen-kinderbijslag.html",
-    scope: "Kinderbijslagbedragen",
+  vng: {
+    label: "VNG",
+    note: "Adviestabel ouderbijdrage gesubsidieerde peuteropvang",
+    url: "https://vng.nl",
   },
-];
+  mijnpensioenoverzicht: {
+    label: "Mijnpensioenoverzicht.nl",
+    note: "Je persoonlijke pensioengegevens",
+    url: "https://www.mijnpensioenoverzicht.nl/",
+  },
+};
+
+/* Welke bronnen horen bij welke calculator. */
+export const SOURCES_BY_CALCULATOR = {
+  "meer-minder-werken": [
+    "belastingdienst",
+    "toeslagen",
+    "vng",
+    "belastingdienstCAP",
+    "rijksoverheid",
+    "svb",
+    "mijnpensioenoverzicht",
+  ],
+  "netto-salaris": [
+    "belastingdienst",
+    "rijksoverheid",
+  ],
+  "kinderopvang": [
+    "toeslagen",
+    "belastingdienst",
+    "rijksoverheid",
+    "vng",
+  ],
+};
+
+export const sourcesFor = (calculatorId) =>
+  (SOURCES_BY_CALCULATOR[calculatorId] || []).map((k) => SOURCES[k]).filter(Boolean);

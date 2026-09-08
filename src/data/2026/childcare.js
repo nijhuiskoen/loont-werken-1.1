@@ -1,36 +1,14 @@
-export const TAX_2026 = {
-  s1: 38883,
-  t1: 0.3575,
-  s2: 78426,
-  t2: 0.3756,
-  t3: 0.495,
-  ahkMax: 3115,
-  ahkDrempel: 29736,
-  ahkAfbouw: 0.06398,
-  arbMax: 5685,
-  arbStart: 45592,
-  arbAfbouw: 0.0651,
-  arbNul: 132920,
-  iackMax: 3032,
-  iackDrempel: 6239,
-  iackOpbouw: 0.1145,
-};
-
-export const MAX_UURTARIEF_2026 = {
-  dagopvang: 11.23,
-  bso: 9.98,
-  gastouder: 8.49,
-  peuterspeelzaal: 11.23,
-};
-
-export const OPVANG_2026 = {
+/* Kinderopvang 2026: maximum uurtarieven, opvangvormen, kinderopvangtoeslagtabel
+   en de VNG-adviestabel voor gesubsidieerde peuteropvang.
+   Bronnen: Rijksoverheid/Belastingdienst (KOT), VNG (ouderbijdrage). Ongewijzigd uit v20. */
+export const MAX_UURTARIEF = { dagopvang: 11.23, bso: 9.98, gastouder: 8.49, peuterspeelzaal: 11.23 };
+export const OPVANG = {
   dagopvang: { label: "Dagopvang", sub: "0–4 jaar", uren: 10.5, tarief: 11.47 },
   bso: { label: "BSO", sub: "4–12 jaar", uren: 5, tarief: 10.25 },
   gastouder: { label: "Gastouder", sub: "flexibel", uren: 9, tarief: 8.75 },
   peuterspeelzaal: { label: "Peuterspeelzaal", sub: "peuteropvang", uren: 4, tarief: 9.75 },
 };
-
-export const KOT_2026 = [
+export const KOT = [
   [0,0.960,0.960],[56413,0.955,0.956],[58185,0.948,0.956],[59958,0.939,0.956],[61896,0.924,0.956],
   [65696,0.916,0.952],[69493,0.905,0.946],[73293,0.882,0.942],[77095,0.859,0.939],[80892,0.837,0.932],
   [84694,0.812,0.927],[88492,0.789,0.922],[92292,0.767,0.915],[96092,0.743,0.909],[99890,0.721,0.905],
@@ -43,21 +21,8 @@ export const KOT_2026 = [
   [220135,0.365,0.712],[224027,0.365,0.704],[227916,0.365,0.696],[231808,0.365,0.691],[235698,0.365,0.682],
 ];
 
-export const VNG_PEUTER_2026 = [
+/* VNG-adviestabel ouderbijdrage (gesubsidieerde) peuteropvang 2026 — bron: VNG. Per uur, per gezins-toetsingsinkomen. */
+export const VNG_PEUTER = [
   [0, 0.45, 0.45],[24150, 0.45, 0.45],[37130, 0.45, 0.45],[51093, 0.61, 0.48],
   [69493, 1.97, 0.80],[99890, 4.28, 1.32],[138421, 6.89, 2.56],
 ];
-
-export const WPM_2026 = 52 / 12;
-export const CIJFERS_JAAR = 2026;
-export const CIJFERS_BIJGEWERKT = "februari 2026";
-
-export const PENSION_CONFIG_2026 = {
-  aowLeeftijd: 67,
-  aowBrutoJaarAlleenstaand: 19651,
-  aowBrutoJaarGehuwdPP: 13465,
-  maxPensioengevendLoon: 137800,
-  standaardFranchise: 19172,
-  maxOpbouwMiddelloon: 0.01875,
-  maxPremiePct: 0.30,
-};

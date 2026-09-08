@@ -1,46 +1,54 @@
-import { Suspense, lazy, useEffect, useState } from "react";
-import Home from "./pages/Home";
-import ComingSoon from "./pages/ComingSoon";
+import React, { Suspense, lazy } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { CALCULATORS } from "./config/calculators.js";
 
-const MeerMinderWerken = lazy(() => import("./pages/MeerMinderWerken"));
+/*
+ * App.jsx doet alleen de applicatiestructuur en routing.
+ * Elke calculator zit in zijn eigen page-module en wordt pas geladen
+ * wanneer de gebruiker die route opent (code splitting).
+ */
 
-function Loading() {
-  return <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>Laden…</div>;
+const Home = lazy(()=>import("./pages/Home.jsx"));
+
+/* Pages per module-naam uit de registry. Vite kan deze paden statisch analyseren. */
+const PAGES = {
+  MeerMinderWerken:     lazy(()=>import("./pages/MeerMinderWerken.jsx")),
+  NettoSalaris:         lazy(()=>import("./pages/NettoSalaris.jsx")),
+  Vakantiegeld:         lazy(()=>import("./pages/Vakantiegeld.jsx")),
+  Ouderschapsverlof:    lazy(()=>import("./pages/Ouderschapsverlof.jsx")),
+  Kinderopvang:         lazy(()=>import("./pages/Kinderopvang.jsx")),
+  Gezinsbudget:         lazy(()=>import("./pages/Gezinsbudget.jsx")),
+  BabyEersteJaar:       lazy(()=>import("./pages/BabyEersteJaar.jsx")),
+  HypotheekNaKind:      lazy(()=>import("./pages/HypotheekNaKind.jsx")),
+  HypotheekMaandlasten: lazy(()=>import("./pages/HypotheekMaandlasten.jsx")),
+  KoopVsHuur:           lazy(()=>import("./pages/KoopVsHuur.jsx")),
+  PensioenMinderWerken: lazy(()=>import("./pages/PensioenMinderWerken.jsx")),
+  AutoVanDeZaak:        lazy(()=>import("./pages/AutoVanDeZaak.jsx")),
+};
+
+function Loading(){
+  return (
+    <div className="route-loading" role="status" aria-live="polite">
+      <span className="spinner" aria-hidden="true"></span>
+      <span>Laden…</span>
+    </div>
+  );
 }
 
-function currentPath() {
-  if (typeof window === "undefined") return "/";
-  return window.location.pathname.replace(/\/+$/, "") || "/";
-}
-
-export default function App() {
-  const [path, setPath] = useState(currentPath);
-
-  useEffect(() => {
-    const onPopState = () => setPath(currentPath());
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
-
-  useEffect(() => {
-    const onClick = (event) => {
-      const anchor = event.target.closest?.("a[href]");
-      if (!anchor) return;
-      const url = new URL(anchor.href, window.location.origin);
-      if (url.origin !== window.location.origin || url.pathname === currentPath()) return;
-      event.preventDefault();
-      window.history.pushState({}, "", url.pathname + url.search + url.hash);
-      setPath(currentPath());
-      window.scrollTo(0, 0);
-    };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
-  }, []);
-
-  let page;
-  if (path === "/") page = <Home />;
-  else if (path === "/meer-minder-werken") page = <MeerMinderWerken />;
-  else page = <ComingSoon />;
-
-  return <Suspense fallback={<Loading />}>{page}</Suspense>;
+export default function App(){
+  return (
+    <div className="app" lang="nl">
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          {CALCULATORS.map((c)=>{
+            const Page = PAGES[c.module];
+            if(!Page) return null;
+            return <Route key={c.id} path={c.slug} element={<Page />} />;
+          })}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </div>
+  );
 }

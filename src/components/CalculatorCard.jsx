@@ -1,18 +1,31 @@
-export default function CalculatorCard({ calculator }) {
-  const content = (
+import React from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+
+/* Kaart voor één calculator. Beschikbaar = link, anders een nette
+   niet-klikbare "Binnenkort"-kaart. */
+export default function CalculatorCard({ calculator }){
+  const { icon, title, description, slug, available } = calculator;
+
+  const inner = (
     <>
-      <div className="calculator-icon" aria-hidden="true">{calculator.icon}</div>
-      <div className="calculator-card-body">
-        <div className="calculator-card-title-row">
-          <h3>{calculator.title}</h3>
-          {!calculator.available && <span className="coming-soon">Binnenkort</span>}
-        </div>
-        <p>{calculator.description}</p>
-      </div>
-      {calculator.available && <span className="calculator-arrow" aria-hidden="true">→</span>}
+      <span className="cc-icon" aria-hidden="true">{icon}</span>
+      <span className="cc-body">
+        <span className="cc-title">{title}</span>
+        <span className="cc-desc">{description}</span>
+      </span>
+      {available
+        ? <span className="cc-foot go">Berekenen <ArrowRight size={15} aria-hidden="true"/></span>
+        : <span className="cc-foot soon">Binnenkort</span>}
     </>
   );
-  return calculator.available
-    ? <a className="calculator-card" href={calculator.path}>{content}</a>
-    : <div className="calculator-card disabled" aria-disabled="true">{content}</div>;
+
+  if(!available){
+    return (
+      <div className="cc is-soon" aria-label={`${title} — binnenkort beschikbaar`}>
+        {inner}
+      </div>
+    );
+  }
+  return <Link to={slug} className="cc">{inner}</Link>;
 }

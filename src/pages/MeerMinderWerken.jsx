@@ -1,195 +1,22 @@
 import React, { useState, useMemo, useId, useEffect } from "react";
-import { ArrowLeft, ArrowRight, Car, Check, RefreshCw, Users, Minus, Plus, Info, Trash2, Printer, Copy, Share2 } from "lucide-react";
-import {
-  MAX_UURTARIEF, OPVANG, CIJFERS_JAAR, CIJFERS_BIJGEWERKT,
-  PENSION_CONFIG, calc, calculatePension, brutoBijtelling, eur
-} from "../calculations/meerMinderWerken";
-import "../styles/meerMinderWerken.css";
+import { ArrowLeft, ArrowRight, Car, Check, RefreshCw, Users, Plus, Info, Trash2, Printer, Copy, Share2 } from "lucide-react";
 
-const STORE_KEY="loont-werken:v1";
-async function saveState(data){
-  try{ if(typeof window!=="undefined" && window.storage) { await window.storage.set(STORE_KEY, JSON.stringify(data)); return true; } }catch(e){}
-  return false;
-}
-async function loadState(){
-  try{ if(typeof window!=="undefined" && window.storage){ const r=await window.storage.get(STORE_KEY); if(r&&r.value) return JSON.parse(r.value); } }catch(e){}
-  return null;
-}
-async function clearState(){ try{ if(typeof window!=="undefined" && window.storage) await window.storage.delete(STORE_KEY); }catch(e){} }
+import CalculatorLayout from "../components/CalculatorLayout.jsx";
+import { NumField, Euro, Pct, Stepper } from "../components/FormFields.jsx";
+import { RadioPills, RadioTiles } from "../components/ChoiceFields.jsx";
+import { SRow } from "../components/ResultRow.jsx";
+import { HoursChart } from "../components/HoursChart.jsx";
 
-/* --- Deelbare link: de hele situatie zit in de URL zelf, niets op een server. --- */
-function encodeShare(data){
-  try{
-    const json=JSON.stringify(data);
-    const bytes=new TextEncoder().encode(json);
-    let bin=""; bytes.forEach((b)=>{ bin+=String.fromCharCode(b); });
-    return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-  }catch(e){ return ""; }
-}
-function decodeShare(token){
-  try{
-    const b64=token.replace(/-/g,"+").replace(/_/g,"/");
-    const bin=atob(b64+"===".slice((b64.length+3)%4));
-    const bytes=Uint8Array.from(bin, (c)=>c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
-  }catch(e){ return null; }
-}
-function readShareToken(){
-  try{
-    const u=new URL(window.location.href);
-    return u.searchParams.get("d") || (u.hash.startsWith("#d=") ? u.hash.slice(3) : null);
-  }catch(e){ return null; }
-}
-function buildShareUrl(token){
-  try{
-    const u=new URL(window.location.href);
-    u.hash=""; u.searchParams.set("d", token);
-    return u.toString();
-  }catch(e){ return ""; }
-}
-
-const nf0 = new Intl.NumberFormat("nl-NL",{maximumFractionDigits:0});
-
-function NumField({ id, value, onCommit, ariaLabel, className="control num", group, allowDecimal, autoFocus, placeholder }){
-  const fmt=(v)=>{ if(v===0||v==null||Number.isNaN(v)) return ""; return group?nf0.format(v):String(v); };
-  const [txt,setTxt]=useState(fmt(value));
-  const [foc,setFoc]=useState(false);
-  useEffect(()=>{ if(!foc) setTxt(fmt(value)); },[value,foc]);
-  const handle=(e)=>{
-    if(group){
-      const digits=e.target.value.replace(/\D/g,"");
-      const n=digits?parseInt(digits,10):0;
-      setTxt(digits?nf0.format(n):"");
-      onCommit(n);
-    } else {
-      const clean=e.target.value.replace(allowDecimal?/[^0-9.,]/g:/[^0-9]/g,"");
-      setTxt(clean);
-      const n=parseFloat(clean.replace(",","."));
-      onCommit(Number.isFinite(n)?n:0);
-    }
-  };
-  return <input id={id} aria-label={ariaLabel} className={className} type="text"
-    inputMode={allowDecimal?"decimal":"numeric"} autoFocus={autoFocus} placeholder={placeholder}
-    value={txt} onFocus={()=>setFoc(true)} onBlur={()=>setFoc(false)} onChange={handle}
-      onKeyDown={(e)=>{ if(e.key==="Enter"){ e.preventDefault(); e.currentTarget.blur(); } }} enterKeyHint="done" />;
-}
-function Euro({ id, value, onChange, autoFocus, sm }){
-  return (
-    <div className={"euro"+(sm?" sm":"")}>
-      <span className="sign" aria-hidden="true">€</span>
-      <NumField id={id} className="euro-in" value={value} onCommit={onChange} autoFocus={autoFocus} group placeholder="0" />
-      <span className="per" aria-hidden="true">/mnd</span>
-    </div>
-  );
-}
-function Pct({ id, value, onChange, ariaLabel }){
-  return (
-    <div className="pctbox">
-      <NumField id={id} className="pct-in" allowDecimal value={value} onCommit={onChange} ariaLabel={ariaLabel} placeholder="0" />
-      <span className="pct-sign" aria-hidden="true">%</span>
-    </div>
-  );
-}
-function Stepper({ label, value, onChange, step=1, min=0, max=80 }){
-  const dec=()=>onChange(Math.max(min, Math.round((value-step)*100)/100));
-  const inc=()=>onChange(Math.min(max, Math.round((value+step)*100)/100));
-  return (
-    <div className="stepper" role="group" aria-label={label}>
-      <button type="button" aria-label={`${label}: verlagen`} onClick={dec}><Minus size={16} aria-hidden="true"/></button>
-      <input type="number" inputMode="numeric" className="num" aria-label={label} value={value}
-        onChange={(e)=>onChange(Math.max(min,Math.min(max,parseFloat(e.target.value)||0)))} />
-      <button type="button" aria-label={`${label}: verhogen`} onClick={inc}><Plus size={16} aria-hidden="true"/></button>
-    </div>
-  );
-}
-function RadioPills({ legend, name, options, value, onChange }){
-  return (
-    <div className="rg" role="radiogroup" aria-label={legend}>
-      <span className="rg-label">{legend}</span>
-      <div className="rg-pills">
-        {options.map((o)=>(
-          <label className="opt pill" key={o}>
-            <input type="radio" name={name} checked={value===o} onChange={()=>onChange(o)} />
-            <span className="box">{o}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
-function RadioTiles({ legend, name, options, value, onChange }){
-  return (
-    <div className="rg" role="radiogroup" aria-label={legend}>
-      <span className="rg-label">{legend}</span>
-      <div className="rg-grid">
-        {options.map((o)=>(
-          <label className="opt tile" key={o.value}>
-            <input type="radio" name={name} checked={value===o.value} onChange={()=>onChange(o.value)} />
-            <span className="box"><span className="t">{o.label}</span><span className="s">{o.sub}</span></span>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
-}
-/* Lijngrafiek: besteedbaar inkomen over een reeks werkuren. */
-function HoursChart({ points, currentA, currentB, nameA, nameB, parentName }){
-  if(!points.length) return null;
-  const W=680,H=260,ML=64,MR=18,MT=18,MB=42;
-  const xs=points.map(p=>p.uren), ys=points.map(p=>p.besteedbaar);
-  const x0=Math.min(...xs), x1=Math.max(...xs);
-  const pad=(Math.max(...ys)-Math.min(...ys))*0.15 || 100;
-  const y0=Math.min(...ys)-pad, y1=Math.max(...ys)+pad;
-  const px=(u)=> ML + (u-x0)/((x1-x0)||1) * (W-ML-MR);
-  const py=(v)=> MT + (1-(v-y0)/((y1-y0)||1)) * (H-MT-MB);
-  const d=points.map((p,i)=>`${i?"L":"M"}${px(p.uren).toFixed(1)},${py(p.besteedbaar).toFixed(1)}`).join(" ");
-  const area=`${d} L${px(x1).toFixed(1)},${(H-MB).toFixed(1)} L${px(x0).toFixed(1)},${(H-MB).toFixed(1)} Z`;
-  const ticks=[y0+(y1-y0)*0.15, y0+(y1-y0)*0.5, y0+(y1-y0)*0.85];
-  const mark=(u,label,color)=>{
-    const p=points.reduce((a,b)=>Math.abs(b.uren-u)<Math.abs(a.uren-u)?b:a);
-    return { cx:px(p.uren), cy:py(p.besteedbaar), label, color, val:p.besteedbaar, uren:p.uren };
-  };
-  const m=[mark(currentA,nameA,"#6D28D9"), mark(currentB,nameB,"#DB2777")];
-  return (
-    <figure className="chart">
-      <figcaption>Besteedbaar per maand als <strong>{parentName}</strong> meer of minder werkt</figcaption>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" width="100%"
-        aria-label={`Grafiek: besteedbaar inkomen per maand bij verschillende werkuren van ${parentName}. Bij ${m[0].uren} uur ${eur(m[0].val)}, bij ${m[1].uren} uur ${eur(m[1].val)}.`}>
-        <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6D28D9" stopOpacity="0.22"/><stop offset="100%" stopColor="#6D28D9" stopOpacity="0"/>
-        </linearGradient></defs>
-        {ticks.map((t,i)=>(<g key={i}>
-          <line x1={ML} y1={py(t)} x2={W-MR} y2={py(t)} stroke="var(--line)" strokeWidth="1"/>
-          <text x={ML-10} y={py(t)+4} textAnchor="end" fontSize="11" fill="var(--ink-3)">{eur(t)}</text>
-        </g>))}
-        <path d={area} fill="url(#cg)"/>
-        <path d={d} fill="none" stroke="#6D28D9" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-        {points.filter((p)=>p.uren%4===0).map((p,i)=>(
-          <text key={i} x={px(p.uren)} y={H-MB+20} textAnchor="middle" fontSize="11" fill="var(--ink-3)">{p.uren}u</text>
-        ))}
-        <text x={(ML+W-MR)/2} y={H-6} textAnchor="middle" fontSize="11" fill="var(--ink-3)">uren per week</text>
-        {m.map((k,i)=>(<g key={i}>
-          <line x1={k.cx} y1={MT} x2={k.cx} y2={H-MB} stroke={k.color} strokeWidth="1" strokeDasharray="4 4" opacity="0.5"/>
-          <circle cx={k.cx} cy={k.cy} r="6" fill="#fff" stroke={k.color} strokeWidth="3"/>
-        </g>))}
-      </svg>
-      <div className="chartlegend">
-        {m.map((k,i)=>(<span key={i}><i style={{background:k.color}}/>{k.label}: {k.uren}u · {eur(k.val)}/mnd</span>))}
-      </div>
-    </figure>
-  );
-}
-function SRow({ label, value, tone, total }){
-  return (
-    <div className={`srow${total?" total":""}`}>
-      <span className="k">{label}</span>
-      <span className={`v num${tone?" "+tone:""}`}>{value}</span>
-    </div>
-  );
-}
-
-
-
+import { calculateScenario } from "../calculations/income.js";
+import { calculatePension, calculatePensionContribution, calculateJaarruimte } from "../calculations/pension.js";
+import { brutoBijtelling } from "../calculations/car.js";
+import { PENSION_CONFIG, PENSION_MODEL_AANNAMES } from "../data/2026/pension.js";
+import { JAARRUIMTE_CONFIG } from "../data/2026/jaarruimte.js";
+import { MAX_UURTARIEF, OPVANG } from "../data/2026/childcare.js";
+import { CIJFERS_JAAR, CIJFERS_BIJGEWERKT } from "../data/2026/meta.js";
+import { eur } from "../utils/format.js";
+import { saveState, loadState, clearState } from "../utils/storage.js";
+import { encodeShare, decodeShare, readShareToken, buildShareUrl } from "../utils/share.js";
 
 const newParent = (name)=>({ name, bruto:0, uren:32, car:{ enabled:false, cataloguswaarde:0, pctLow:0.22, pctHigh:0.22, eigenBijdrage:0 } });
 const newChild = (n)=>({ name:"", opvang:[ { type:"dagopvang", urenPerDag:OPVANG.dagopvang.uren, uurtarief:OPVANG.dagopvang.tarief, days:[2,2], underKOT:true } ] });
@@ -203,7 +30,7 @@ const ASIDE = {
   pension:{t:"Pensioen", d:"Wat betekent dit voor later?"},
 };
 
-export default function MeerMinderWerken(){
+function MeerMinderWerkenCalculator(){
   const uid = useId();
   const [step, setStep] = useState(0);
   const [vakantiegeld, setVakantiegeld] = useState(0.08);
@@ -220,13 +47,17 @@ export default function MeerMinderWerken(){
     { name:"Nu", hours:[40,40] },
     { name:"Alternatief", hours:[32,32] },
   ]);
-  const [pension, setPension] = useState({ enabled:false, forParent:0, geboortejaar:0, regeling:"middelloon", pensioengevendFT:0, franchise:PENSION_CONFIG.standaardFranchise, opbouwPct:1.875, premiePct:30, fulltimeUren:40 });
+  const [pension, setPension] = useState({ enabled:false, forParent:0, geboortejaar:0, regeling:"middelloon", pensioengevendFT:0, franchise:PENSION_CONFIG.standaardFranchise, opbouwPct:1.875, premiePct:30, fulltimeUren:40, inkomenVorigJaar:0, factorA:0 });
 
   const patchParent=(i,x)=>setParents((p)=>p.map((v,j)=>j===i?{...v,...x}:v));
   const patchCar=(i,x)=>setParents((p)=>p.map((v,j)=>j===i?{...v,car:{...v.car,...x}}:v));
   const patchChild=(i,x)=>setChildren((c)=>c.map((v,j)=>j===i?{...v,...x}:v));
   const patchOpvang=(ci,oi,x)=>setChildren((cs)=>cs.map((c,j)=> j!==ci?c:{...c,opvang:c.opvang.map((o,k)=>k!==oi?o:{...o,...x})}));
-  const addOpvang=(ci)=>setChildren((cs)=>cs.map((c,j)=> j!==ci?c:{...c,opvang:[...c.opvang,{ type:"peuterspeelzaal", urenPerDag:OPVANG.peuterspeelzaal.uren, uurtarief:OPVANG.peuterspeelzaal.tarief, days:[2,2], underKOT:true }]}));
+  const MAX_OPVANG_PER_KIND = 4;   // evenveel als er opvangvormen bestaan (dagopvang/bso/gastouder/peuterspeelzaal)
+  const addOpvang=(ci)=>setChildren((cs)=>cs.map((c,j)=> {
+    if(j!==ci || c.opvang.length>=MAX_OPVANG_PER_KIND) return c;
+    return {...c,opvang:[...c.opvang,{ type:"peuterspeelzaal", urenPerDag:OPVANG.peuterspeelzaal.uren, uurtarief:OPVANG.peuterspeelzaal.tarief, days:[2,2], underKOT:true }]};
+  }));
   const removeOpvang=(ci,oi)=>setChildren((cs)=>cs.map((c,j)=> j!==ci?c:{...c,opvang:c.opvang.length>1?c.opvang.filter((_,k)=>k!==oi):c.opvang}));
   const setOpvangDays=(ci,oi,sci,val)=>setChildren((cs)=>cs.map((c,j)=> j!==ci?c:{...c,opvang:c.opvang.map((o,k)=>{ if(k!==oi) return o; const d=[...(o.days||[0,0])]; d[sci]=val; return {...o,days:d}; })}));
   const patchScenario=(i,x)=>setScenarios((s)=>s.map((v,j)=>j===i?{...v,...x}:v));
@@ -268,7 +99,7 @@ export default function MeerMinderWerken(){
   const back=()=>{ if(!canNav()) return; dismissKeyboard(); setStep((s)=>Math.max(s-1, 0)); };
   const goto=(k,i)=>{ dismissKeyboard(); setStep(flow.findIndex((f)=>f.k===k && (i===undefined||f.i===i))); };
 
-  const results=scenarios.map((sc,si)=>calc({ parents, vakantiegeld, dertiende, children, hours:sc.hours, si }));
+  const results=scenarios.map((sc,si)=>calculateScenario({ parents, vakantiegeld, dertiende, children, hours:sc.hours, si }));
   const [A,B]=results;
   const diffBesteedbaar=A.besteedbaar-B.besteedbaar;
   const diffUren=A.werkurenMnd-B.werkurenMnd;
@@ -351,14 +182,14 @@ export default function MeerMinderWerken(){
     const url=buildShareUrl(encodeShare(shareData()));
     setShareUrl(url);
     try{
-      if(navigator.share){ await navigator.share({ title:"Loont het om meer te werken?", url }); return; }
+      if(navigator.share){ await navigator.share({ title:"Deeltijd of voltijd na een kind?", url }); return; }
       await navigator.clipboard.writeText(url);
       setLinkCopied(true); setTimeout(()=>setLinkCopied(false),2400);
     }catch(e){ /* url blijft zichtbaar in het veld */ }
   };
   const buildSummary=()=>{
     const L=[];
-    L.push("Loont het om meer te werken? — samenvatting");
+    L.push("Deeltijd of voltijd na een kind? — samenvatting");
     L.push(`Cijfers ${CIJFERS_JAAR} · indicatief, geen financieel advies`);
     L.push("");
     scenarios.forEach((sc,i)=>{
@@ -397,7 +228,7 @@ export default function MeerMinderWerken(){
     const pts=[];
     for(let u=Math.max(8,16); u<=40; u+=1){
       const hours=[...scenarios[0].hours]; hours[cp]=u;
-      const r=calc({ parents, vakantiegeld, dertiende, children, hours, si:0 });
+      const r=calculateScenario({ parents, vakantiegeld, dertiende, children, hours, si:0 });
       pts.push({ uren:u, besteedbaar:r.besteedbaar });
     }
     return pts;
@@ -465,7 +296,7 @@ export default function MeerMinderWerken(){
                 { name:"", bruto:0, uren:40, car:{ enabled:false, cataloguswaarde:0, pctLow:0.22, pctHigh:0.22, eigenBijdrage:0 } }]);
     setChildren([]);
     setScenarios([{ name:"Nu", hours:[40,40] },{ name:"Alternatief", hours:[32,32] }]);
-    setPension({ enabled:false, forParent:0, geboortejaar:0, regeling:"middelloon", pensioengevendFT:0, franchise:PENSION_CONFIG.standaardFranchise, opbouwPct:1.875, premiePct:30, fulltimeUren:40 });
+    setPension({ enabled:false, forParent:0, geboortejaar:0, regeling:"middelloon", pensioengevendFT:0, franchise:PENSION_CONFIG.standaardFranchise, opbouwPct:1.875, premiePct:30, fulltimeUren:40, inkomenVorigJaar:0, factorA:0 });
     setVakantiegeld(0.08); setDertiende(false); setStep(0);
   };
   const aside = cur.k==="scenario" ? {t:cur.i===0?"Scenario 1":"Scenario 2", d:cur.i===0?"Hoe werken jullie nu?":"Waar wil je mee vergelijken?"} : (ASIDE[cur.k]||{t:"",d:""});
@@ -476,7 +307,7 @@ export default function MeerMinderWerken(){
         <div className="introfull">
           <div className="introcard">
             <div className="badge" aria-hidden="true"><Users size={30}/></div>
-            <h1>Loont het om meer te werken?</h1>
+            <h1>Deeltijd of voltijd na een kind?</h1>
             <p>Een paar korte vragen over je gezin, en je ziet meteen wat meer of minder werken netto oplevert — inclusief belasting, kinderopvangtoeslag en de auto van de zaak.</p>
             <button className="btn btn-lg" onClick={next}>Beginnen <ArrowRight size={19} aria-hidden="true"/></button>
             <p className="fine">Indicatief · cijfers {CIJFERS_JAAR} (bijgewerkt {CIJFERS_BIJGEWERKT}) · geen financieel advies · daadwerkelijke bedragen kunnen afwijken</p>
@@ -551,38 +382,56 @@ export default function MeerMinderWerken(){
             {pension.enabled ? (
               <section className="scard" aria-label="Pensioen">
                 <div className="head"><h3>Pensioen · {pParentName}</h3></div>
+
+                {pens.aow && (
+                  <div className="banner" role="note" style={{marginBottom:14,background:"var(--primary-tint)",borderColor:"var(--primary-line)",color:"var(--primary-ink)"}}>
+                    <Info size={17} aria-hidden="true" style={{color:"var(--primary)"}}/>
+                    <p><strong>AOW blijft gelijk.</strong> Je AOW bouw je op door in Nederland te wonen, niet door te werken — minder uren verlagen je AOW dus niet. Jouw AOW-leeftijd: <strong>{pens.aow.jaren} jaar{pens.aow.maanden?` en ${pens.aow.maanden} maanden`:""}</strong>{!pens.aow.vastgesteld?" (nog niet definitief vastgesteld door het kabinet — laatst bekende waarde als planning)":""}.{pens.jarenTotAOW!=null?` Nog ± ${pens.jarenTotAOW} jaar te gaan.`:""} Bruto AOW {CIJFERS_JAAR}: {eur(pens.aow.brutoJaarAlleenstaand)}/jaar (alleenstaand) of {eur(pens.aow.brutoJaarGehuwdPP)}/jaar p.p. (samenwonend).</p>
+                  </div>
+                )}
+
                 {pens.berekenbaar ? (<>
                   <SRow label={`Opbouw bij ${scenarios[0].name} (${scenarios[0].hours[pension.forParent]} u)`} value={eur(pens.jaarNu)+"/jr"} />
                   <SRow label={`Opbouw bij ${scenarios[1].name} (${scenarios[1].hours[pension.forParent]} u)`} value={eur(pens.jaarAlt)+"/jr"} />
                   <SRow label={pens.isDC?"Verschil premie-inleg/jaar":"Verschil pensioenopbouw/jaar"} value={(pMinder?"−":"+")+eur(pAbs)} tone={pMinder?"cost":"good"} total />
                   <p className="meta" style={{marginTop:12,color:"var(--ink-2)"}}>
                     {pens.isDC
-                      ? <>Je legt naar schatting <strong>{eur(pAbs)} {pMinder?"minder":"meer"}</strong> premie per jaar in. Wat dat voor je uiteindelijke pensioen betekent hangt af van rendement — dat rekenen we bewust niet om, om schijnprecisie te vermijden.</>
-                      : <>Je bouwt naar schatting <strong>{eur(pAbs)} {pMinder?"minder":"meer"}</strong> pensioen (jaarlijkse uitkering) per jaar op. Doe je dit 10 jaar, dan is je pensioen ~<strong>{eur(pAbs*10)} per jaar {pMinder?"lager":"hoger"}</strong> — en dat levenslang vanaf je pensioendatum.</>}
+                      ? <>Je legt naar schatting <strong>{eur(pAbs)} {pMinder?"minder":"meer"}</strong> premie per jaar in — dit is inleg, nog geen uitkering. Wat dat later oplevert hangt af van rendement (zie hieronder).</>
+                      : <>Je bouwt naar schatting <strong>{eur(pAbs)} {pMinder?"minder":"meer"}</strong> pensioen (jaarlijkse uitkering) per jaar op. Doe je dit 10 jaar, dan is je pensioen ~<strong>{eur(pAbs*10)} per jaar {pMinder?"lager":"hoger"}</strong> — en dat levenslang vanaf je pensioendatum. Dit is dus geen gemiste inleg maar een lagere gegarandeerde uitkering.</>}
                   </p>
+
+                  {pens.isDC && (()=>{ const split = calculatePensionContribution({ grondslag:pens.grondslag, premiePct:pension.premiePct/100, dtf:pens.dtfNu, werkgeversAandeel:null }); return (
+                    <p className="meta" style={{marginTop:6}}>Indicatieve verdeling bij {scenarios[0].name} (aanname, geen officieel gegeven — verschilt per cao): werkgever ~{eur(split.werkgever)}/jr · werknemer ~{eur(split.werknemer)}/jr (standaard {Math.round(PENSION_MODEL_AANNAMES.standaardWerkgeversAandeel*100)}/{Math.round((1-PENSION_MODEL_AANNAMES.standaardWerkgeversAandeel)*100)}-verdeling).</p>
+                  ); })()}
+
                   <div style={{marginTop:12,paddingTop:8,borderTop:"1px solid var(--line)"}}>
                     <p className="meta" style={{margin:"0 0 4px"}}>{pens.isDC?"Gemiste/extra premie-inleg over de jaren:":"Effect op je jaarlijkse pensioen na:"}</p>
                     {[1,5,10].map((n)=>(<SRow key={n} label={`${n} jaar`} value={(pMinder?"−":"+")+eur(pAbs*n)} tone={pMinder?"cost":"good"} />))}
                     {pens.jarenTotAOW!=null && pens.jarenTotAOW>0 && (<SRow label={`Tot AOW (± ${pens.jarenTotAOW} jaar)`} value={(pMinder?"−":"+")+eur(pAbs*pens.jarenTotAOW)} tone={pMinder?"cost":"good"} />)}
                   </div>
-                  <div className="banner" role="note" style={{marginTop:14,background:"var(--primary-tint)",borderColor:"var(--primary-line)",color:"var(--primary-ink)"}}>
-                    <Info size={17} aria-hidden="true" style={{color:"var(--primary)"}}/>
-                    <p><strong>AOW blijft gelijk.</strong> Je AOW (67 jaar in 2026) bouw je op door in Nederland te wonen, niet door te werken — minder uren verlagen je AOW dus niet. Bruto AOW 2026: €19.651/jaar (alleenstaand) of €13.465 p.p. (samenwonend).{pens.jarenTotAOW!=null?` Nog ± ${pens.jarenTotAOW} jaar tot je AOW.`:""}</p>
-                  </div>
+
+                  {pens.isDC && pens.vermogenNu!=null && (
+                    <div style={{marginTop:12,paddingTop:8,borderTop:"1px solid var(--line)"}}>
+                      <p className="meta" style={{margin:"0 0 4px"}}>Geschat pensioenvermogen op je AOW-leeftijd — modelmatige projectie, géén gegarandeerd rendement ({Math.round(pens.modelAannames.rendement*100)}% per jaar aangenomen):</p>
+                      <SRow label={`Bij ${scenarios[0].name}`} value={eur(pens.vermogenNu)} />
+                      <SRow label={`Bij ${scenarios[1].name}`} value={eur(pens.vermogenAlt)} />
+                      <SRow label="Verschil pensioenvermogen" value={(pMinder?"−":"+")+eur(Math.abs(pens.vermogenVerschil))} tone={pMinder?"cost":"good"} total />
+                      <p className="meta" style={{marginTop:8}}>Omgerekend naar een geschat maandinkomen (vaste uitkering over {pens.modelAannames.uitkeringsjaren} jaar; geen sterftetafel of verzekeringsofferte): ~{eur(pens.geschatMaandinkomenNu)}/mnd → ~{eur(pens.geschatMaandinkomenAlt)}/mnd.</p>
+                    </div>
+                  )}
+
                   <details className="help" style={{marginTop:12}}>
                     <summary>Hoe is dit berekend?</summary>
                     <p>Regeling: <strong>{pens.isDC?"premieregeling":"middelloon"}</strong> · pensioengevend salaris (FT) {eur(pension.pensioengevendFT)} · franchise {eur(pension.franchise)} · grondslag {eur(pens.grondslag)} · {pens.isDC?`premie ${pension.premiePct}%`:`opbouw ${pension.opbouwPct}%`} · deeltijdfactor {scenarios[0].name} {(pens.dtfNu*100).toFixed(0)}% → {scenarios[1].name} {(pens.dtfAlt*100).toFixed(0)}%.</p>
-                    <p>Formule: (pensioengevend salaris − franchise) × {pens.isDC?"premie%":"opbouw%"} × deeltijdfactor. Jij vulde salaris, regeling en percentages zelf in; franchise/percentages hebben officiële 2026-standaarden als startwaarde. Bron: Belastingdienst (Centraal Aanspreekpunt Pensioenen), SVB, Rijksoverheid.</p>
+                    <p>Formule: (pensioengevend salaris − franchise) × {pens.isDC?"premie%":"opbouw%"} × deeltijdfactor. Jij vulde salaris, regeling en percentages zelf in; franchise/percentages hebben officiële {CIJFERS_JAAR}-standaarden als startwaarde.</p>
+                    <p>Pensioenregelingen veranderen door de Wet toekomst pensioenen (uiterlijk 1 januari 2028 aangepast) — er bestaat geen universele formule die voor iedereen exact klopt.</p>
+                    <p>Bronnen: Belastingdienst (Centraal Aanspreekpunt Pensioenen, fiscale kaders), SVB (AOW-bedragen), Rijksoverheid (AOW-leeftijd, Wtp-overgang), Pensioenduidelijkheid.nl (uitleg nieuwe stelsel).</p>
                   </details>
-                  <p className="disc">Deze berekening is een indicatie en geen officiële pensioenprognose. Je daadwerkelijke pensioen hangt af van je pensioenregeling, uitvoerder, toekomstige inkomensontwikkeling, premies, rendementen, indexatie, de overgang naar het nieuwe pensioenstelsel en andere factoren. Controleer je pensioen bij je uitvoerder en via mijnpensioenoverzicht.nl.</p>
+                  <p className="disc">Deze berekening is een indicatie op basis van de door jou ingevulde gegevens en gebruikte aannames — geen officiële pensioenprognose. Je daadwerkelijke pensioen hangt af van je pensioenregeling, uitvoerder, toekomstige premie, rendement, indexatie, de overgang naar het nieuwe pensioenstelsel en je persoonlijke situatie. Controleer je pensioen bij je uitvoerder en via mijnpensioenoverzicht.nl.</p>
                 </>) : (
                   <>
-                    <p className="meta" style={{color:"var(--ink-2)"}}>Met de gekozen gegevens kunnen we het aanvullend pensioen niet betrouwbaar berekenen — bijvoorbeeld omdat je regeling onbekend is of gegevens ontbreken. Je pensioenregeling bepaalt hoe je pensioen wordt opgebouwd, en door de overgang naar het nieuwe pensioenstelsel verschilt dat per regeling.</p>
+                    <p className="meta" style={{color:"var(--ink-2)"}}>Niet genoeg gegevens voor een exacte berekening — bijvoorbeeld omdat je regeling onbekend is of gegevens ontbreken. Je pensioenregeling bepaalt hoe je pensioen wordt opgebouwd, en door de overgang naar het nieuwe pensioenstelsel verschilt dat per regeling.</p>
                     <p className="meta">Vul je regeling, pensioengevend salaris, franchise en opbouw-/premiepercentage in — of gebruik je gegevens van <strong>mijnpensioenoverzicht.nl</strong>.</p>
-                    <div className="banner" role="note" style={{marginTop:12,background:"var(--primary-tint)",borderColor:"var(--primary-line)",color:"var(--primary-ink)"}}>
-                      <Info size={17} aria-hidden="true" style={{color:"var(--primary)"}}/>
-                      <p><strong>AOW blijft gelijk</strong> ongeacht je uren (67 jaar in 2026).</p>
-                    </div>
                   </>
                 )}
               </section>
@@ -592,7 +441,6 @@ export default function MeerMinderWerken(){
                 <p className="meta" style={{color:"var(--ink-2)"}}>Wil je ook zien wat meer of minder werken voor je pensioen betekent? <button className="btn-text" style={{padding:0,fontSize:14}} onClick={()=>goto("pension")}>Vul je pensioengegevens in →</button></p>
               </section>
             )}
-
           {chartPoints.length>0 && (
             <div>
               <HoursChart points={chartPoints} currentA={scenarios[0].hours[cp]} currentB={scenarios[1].hours[cp]}
@@ -677,7 +525,14 @@ export default function MeerMinderWerken(){
 
         <main className="main" onPointerDown={(e)=>{ const t=e.target; if(t && !/^(INPUT|TEXTAREA|SELECT|BUTTON|LABEL)$/.test(t.tagName) && !t.closest("label,button")) dismissKeyboard(); }}>
           <div className="mcontent">
-            <div key={step} className="q step-anim">
+            <div key={step} className="q step-anim" onKeyDown={(e)=>{
+              if(e.key!=="Enter" || e.shiftKey) return;
+              const t=e.target;
+              if(t.tagName==="INPUT" && !["checkbox","radio"].includes(t.type)){
+                e.preventDefault();
+                tryNext();
+              }
+            }}>
 
               {cur.k==="household" && (<>
                 <h1>Hoe ziet jullie gezin eruit?</h1>
@@ -807,7 +662,11 @@ export default function MeerMinderWerken(){
                         : <p className="hint">Geen kinderopvangtoeslag. Inkomensafhankelijke ouderbijdrage volgens de VNG-adviestabel 2026; de gemeente betaalt het verschil tot {eur(MAX_UURTARIEF.dagopvang,2)}/uur. Gemeenten kunnen hiervan afwijken.</p>}
                     </div>
                   ))}
-                  <button type="button" className="btn-add" onClick={()=>addOpvang(cur.i)}><Plus size={17} aria-hidden="true"/><span>Opvangvorm toevoegen</span></button>
+                  {children[cur.i].opvang.length < MAX_OPVANG_PER_KIND ? (
+                    <button type="button" className="btn-add" onClick={()=>addOpvang(cur.i)}><Plus size={17} aria-hidden="true"/><span>Opvangvorm toevoegen</span></button>
+                  ) : (
+                    <p className="hint">Je hebt het maximum van {MAX_OPVANG_PER_KIND} opvangvormen per kind bereikt.</p>
+                  )}
                   <p className="hint">Gaat je kind naar meerdere vormen (bijv. gastouder én peuterspeelzaal)? Voeg ze apart toe — elk heeft eigen uren, tarief en toeslagregeling. De dagen per vorm vul je bij de scenario's in.</p>
                 </div>
               </>)}
@@ -841,6 +700,7 @@ export default function MeerMinderWerken(){
               {cur.k==="pension" && (<>
                 <h1>Wat betekent dit voor je pensioen later?</h1>
                 <p className="qsub">Minder werken betekent meestal ook minder pensioenopbouw. Deze stap is optioneel — sla 'm gerust over.</p>
+                <p className="hint">Pensioenregelingen veranderen door de Wet toekomst pensioenen (uiterlijk 1 januari 2028 aangepast). Er bestaat daardoor geen universele rekenformule — controleer je persoonlijke pensioen altijd bij je pensioenuitvoerder.</p>
                 <div className="qstack">
                   <div className="inset">
                     <span className="lab">Pensioen meeberekenen<br/><span style={{fontSize:12.5,color:"var(--ink-3)",fontWeight:400}}>Je hebt hier ongeveer 1 minuut voor nodig</span></span>
@@ -931,6 +791,30 @@ export default function MeerMinderWerken(){
                         </div>
                       </div>
                     )}
+
+                    <details className="explain">
+                      <summary>Jaarruimte: extra fiscaal voordelig pensioen opbouwen (optioneel)</summary>
+                      <div className="body">
+                        <p>Naast je werkgeverspensioen mag je vaak ook zelf fiscaal voordelig bijsparen (bijv. via lijfrente). Hoeveel dat is — je <strong>jaarruimte</strong> — hangt af van je inkomen van vorig jaar en je Factor A (te vinden op je UPO).</p>
+                        <div className="grid2col" style={{marginTop:12}}>
+                          <div className="field">
+                            <label className="lab" htmlFor={`${uid}ivj`}>Bruto inkomen {CIJFERS_JAAR-1}</label>
+                            <NumField id={`${uid}ivj`} group value={pension.inkomenVorigJaar} onCommit={(v)=>patchPension({inkomenVorigJaar:v})} placeholder="0" />
+                          </div>
+                          <div className="field">
+                            <label className="lab" htmlFor={`${uid}fa`}>Factor A (van je UPO, optioneel)</label>
+                            <NumField id={`${uid}fa`} group value={pension.factorA} onCommit={(v)=>patchPension({factorA:v})} placeholder="0" />
+                            <span className="hint">Onbekend? Laat op 0 — dat is de veilige aanname als je geen werkgeverspensioen hebt.</span>
+                          </div>
+                        </div>
+                        {(()=>{ const jr = calculateJaarruimte({ inkomenVorigJaar:pension.inkomenVorigJaar, factorA:pension.factorA }); return jr ? (
+                          <p style={{marginTop:10}}>Indicatieve jaarruimte {CIJFERS_JAAR}: <strong>{eur(jr.jaarruimte)}</strong> (30% × premiegrondslag {eur(jr.premiegrondslag)} − 6,27 × Factor A, max {eur(JAARRUIMTE_CONFIG.maxJaarruimte)}).</p>
+                        ) : (
+                          <p style={{marginTop:10}}>Vul je inkomen van {CIJFERS_JAAR-1} in om je indicatieve jaarruimte te zien.</p>
+                        ); })()}
+                        <p>Dit is een controle-indicatie — je kunt ook nog <strong>reserveringsruimte</strong> hebben van de laatste 10 jaar (tot {eur(JAARRUIMTE_CONFIG.reserveringsruimteGrens)}). Gebruik voor een exacte, bindende berekening het <a href={JAARRUIMTE_CONFIG.hulpmiddelUrl} target="_blank" rel="noopener noreferrer">hulpmiddel Lijfrentepremie van de Belastingdienst</a>.</p>
+                      </div>
+                    </details>
                   </>)}
                 </div>
               </>)}
@@ -951,5 +835,16 @@ export default function MeerMinderWerken(){
         </main>
       </div>
     </div>
+  );
+}
+
+
+/* De calculator houdt zijn eigen volledige layout (split-screen wizard);
+   CalculatorLayout levert alleen de terug-navigatie. */
+export default function MeerMinderWerken(){
+  return (
+    <CalculatorLayout bare calculatorId="meer-minder-werken">
+      <MeerMinderWerkenCalculator />
+    </CalculatorLayout>
   );
 }
