@@ -41,6 +41,7 @@ export default function SEOHead({
   path = "/",
   type = "WebPage",
   breadcrumbs = [],
+  faqs = [],
   noindex = false,
 }){
   useEffect(() => {
@@ -67,6 +68,18 @@ export default function SEOHead({
       isPartOf: { "@type": "WebSite", name: SITE_NAME, url: origin + "/" }
     }];
 
+    if(faqs?.length){
+      graph.push({
+        "@type": "FAQPage",
+        "@id": `${canonical}#faq`,
+        mainEntity: faqs.map(([question, answer]) => ({
+          "@type": "Question",
+          name: question,
+          acceptedAnswer: { "@type": "Answer", text: answer }
+        }))
+      });
+    }
+
     if(breadcrumbs.length){
       graph.push({
         "@type": "BreadcrumbList",
@@ -85,7 +98,7 @@ export default function SEOHead({
     return () => {
       // Keep the head state lightweight; the next route overwrites these values.
     };
-  }, [title, description, path, type, noindex, JSON.stringify(breadcrumbs)]);
+  }, [title, description, path, type, noindex, JSON.stringify(breadcrumbs), JSON.stringify(faqs)]);
 
   return null;
 }
